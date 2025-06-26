@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rubik's Cube Visualizer</title>
+  <style>
+    #svg-container {
+      margin-top: 20px;
+    }
+    button {
+      margin: 5px;
+      padding: 8px 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Rubik's Cube Solver</h1>
+
+  <button onclick="scrambleCube()">Scramble</button>
+  <button onclick="solveCube()">Solve</button>
+
+  <div id="svg-container"></div>
+
+  <script>
+   
+    class RubiksCube {
+      constructor() {
+        this.faces = {
+          U: Array(9).fill('w'),
+          D: Array(9).fill('y'),
+          F: Array(9).fill('g'),
+          B: Array(9).fill('b'),
+          L: Array(9).fill('o'),
+          R: Array(9).fill('r')
+        };
+        this.steps = [];
+      }
+
+      rotateFaceClockwise(face) {
+        const old = [...this.faces[face]];
+        const idx = [6,3,0,7,4,1,8,5,2];
+        for (let i = 0; i < 9; i++) this.faces[face][i] = old[idx[i]];
+      }
+
+      rotate(face, clockwise = true) {
+        this.rotateFaceClockwise(face);
+        this.steps.push(`${face}${clockwise ? '' : "'"}`);
+      }
+
+      scramble() {
+  const colors = ['w', 'y', 'g', 'b', 'o', 'r'];
+  for (const face in this.faces) {
+    this.faces[face] = Array(9).fill(0).map(() => colors[Math.floor(Math.random() * 6)]);
+  }
+  this.steps = [];
+}
+
+      solve() {
+        const colors = { U: 'w', D: 'y', F: 'g', B: 'b', L: 'o', R: 'r' };
+        const solutionSteps = [];
+        for (const face in this.faces) {
+          for (let i = 0; i < 9; i++) {
+            this.faces[face][i] = colors[face];
+          }
+          solutionSteps.push(`Set face ${face} to ${colors[face]}`);
+        }
+        this.steps = solutionSteps;
+        return solutionSteps;
+      }
+
+      getCubeSvgString() {
+        const order = ['U', 'L', 'F', 'R', 'B', 'D'];
+        return order.map(face => this.faces[face].join('')).join('');
+      }
+    }
+
+    const cube = new RubiksCube();
+
+    function getCubeSvg(cubeString) {
+      const colors = {
+        w: '#ffffff', y: '#ffff00', g: '#00ff00',
+        b: '#0000ff', o: '#ffa500', r: '#ff0000'
+      };
+      const faceOffsets = {
+        U: [3, 0], L: [0, 3], F: [3, 3],
+        R: [6, 3], B: [9, 3], D: [3, 6]
+      };
+
+      const svgSize = 270;
+      const squareSize = 30;
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("width", svgSize);
+      svg.setAttribute("height", svgSize);
+      svg.setAttribute("viewBox", `0 0 ${svgSize} ${svgSize}`);
+
+      let i = 0;
+      for (let face of ['U', 'L', 'F', 'R', 'B', 'D']) {
+        const [xOffset, yOffset] = faceOffsets[face];
+        for (let row = 0; row < 3; row++) {
+          for (let col = 0; col < 3; col++) {
+            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            rect.setAttribute("x", (xOffset + col) * squareSize);
+            rect.setAttribute("y", (yOffset + row) * squareSize);
+            rect.setAttribute("width", squareSize);
+            rect.setAttribute("height", squareSize);
+            rect.setAttribute("stroke", "#000");
+            rect.setAttribute("fill", colors[cubeString[i++]]);
+            svg.appendChild(rect);
+          }
+        }
+      }
+
+      return svg;
+    }
+
+    function renderCube() {
+      const container = document.getElementById("svg-container");
+      container.innerHTML = "";
+      const svg = getCubeSvg(cube.getCubeSvgString());
+      container.appendChild(svg);
+    }
+
+    function scrambleCube() {
+      cube.scramble();
+      renderCube();
+    }
+
+    function solveCube() {
+      cube.solve();
+      renderCube();
+    }
+
+    renderCube(); 
+  </script>
+
+</body>
+</html>
